@@ -6,7 +6,8 @@ import {
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { formatARS } from '../utils/currency'
+import { formatARS, formatAmount } from '../utils/currency'
+import { usePrivacy } from '../context/PrivacyContext'
 import { formatDateTime, formatDate, minutesAgo } from '../utils/dateUtils'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -403,11 +404,70 @@ function ManageInstituciones({ isOpen, onClose }) {
   )
 }
 
+// ── Modal: pago a cuenta ──────────────────────────────────────────────────────
+function PagoCuentaModal({ isOpen, onClose, institucionId }) {
+  const { createPagoCuenta } = useData()
+  const { user } = useAuth()
+  const { addToast } = useToast()
+  const [monto, setMonto] = useState('')
+  const [nota, setNota] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  React.useEffect(() => {
+    if (isOpen) { setMonto(''); setNota(''); setError(''); setSaving(false) }
+  }, [isOpen])
+
+  async function handleSave() {
+    const val = parseFloat(monto)
+    if (!monto || isNaN(val) || val <= 0) { setError('Ingresá un monto válido'); return }
+    setSaving(true)
+    try {
+      await createPagoCuenta({ institucionId, monto: val, nota: nota.trim(), createdBy: user.id })
+      addToast(`Pago a cuenta de ${formatARS(val)} registrado`, 'success')
+      onClose()
+    } catch {
+      setError('Error al registrar el pago')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Registrar pago a cuenta" size="sm">
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-gray-600">
+          Registrá un pago global a cuenta del saldo total de la institución. No modifica los fiados individuales.
+        </p>
+        <Input
+          label="Monto del pago"
+          type="number" min="0.01" step="0.01" prefix="$" placeholder="0,00"
+          value={monto}
+          onChange={e => { setMonto(e.target.value); setError('') }}
+          error={error}
+          autoFocus
+        />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Nota <span className="text-gray-400 font-normal">(opcional)</span></label>
+          <textarea rows={2} placeholder="Ej: Abono quincenal..." value={nota} onChange={e => setNota(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm resize-none focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20" />
+        </div>
+        <div className="flex gap-3 pt-1">
+          <Button variant="secondary" onClick={onClose} className="flex-1" disabled={saving}>Cancelar</Button>
+          <Button onClick={handleSave} className="flex-1" disabled={saving}>
+            {saving ? <><Loader2 size={14} className="animate-spin" /> Registrando...</> : 'Registrar pago'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function Fiados() {
-  const { instituciones, fiados, updateFiado, deleteFiado, markAllFiadosPaid } = useData()
+  const { instituciones, fiados, updateFiado, deleteFiado, markAllFiadosPaid, pagosCuenta, createPagoCuenta, deletePagoCuenta } = useData()
   const { isAdmin, user } = useAuth()
   const { addToast } = useToast()
+  const { hideNumbers } = usePrivacy()
 
   const [selectedId, setSelectedId] = useState(null)
   const [manageOpen, setManageOpen] = useState(false)
@@ -419,6 +479,7 @@ export default function Fiados() {
   const [confirmAllOpen, setConfirmAllOpen] = useState(false)
   const [markingAll, setMarkingAll] = useState(false)
   const [partialPayModal, setPartialPayModal] = useState({ open: false, fiado: null })
+  const [pagoCuentaOpen, setPagoCuentaOpen] = useState(false)
 
   // Auto-select first institution
   const selected = instituciones.find((i) => i.id === selectedId) || instituciones[0] || null
@@ -440,8 +501,12 @@ export default function Fiados() {
     const pagado = instFiados.filter((f) => f.paid).reduce((s, f) => s + f.amount, 0)
     const pagadoParcial = instFiados.filter((f) => !f.paid).reduce((s, f) => s + f.amountPaid, 0)
     const countPendiente = instFiados.filter((f) => !f.paid).length
-    return { pendiente, pagado: pagado + pagadoParcial, countPendiente }
-  }, [instFiados])
+    const totalPagosCuenta = pagosCuenta
+      .filter(p => p.institucionId === selectedIdResolved)
+      .reduce((s, p) => s + p.monto, 0)
+    const saldoReal = pendiente - totalPagosCuenta
+    return { pendiente, pagado: pagado + pagadoParcial, countPendiente, totalPagosCuenta, saldoReal }
+  }, [instFiados, pagosCuenta, selectedIdResolved])
 
   async function handlePartialPay(fiado, payAmount) {
     const newAmountPaid = fiado.amountPaid + payAmount
@@ -584,23 +649,32 @@ export default function Fiados() {
           {selected && (
             <>
               {/* KPI cards */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total pendiente</p>
                   <p className={`text-2xl font-bold mt-1 tabular-nums ${kpi.pendiente > 0 ? 'text-danger-700' : 'text-gray-400'}`}>
-                    {formatARS(kpi.pendiente)}
+                    {formatAmount(kpi.pendiente, hideNumbers)}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">{kpi.countPendiente} items sin cobrar</p>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total cobrado</p>
-                  <p className="text-2xl font-bold mt-1 tabular-nums text-success-700">{formatARS(kpi.pagado)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{instFiados.filter((f) => f.paid).length} items cobrados</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pagos a cuenta</p>
+                  <p className={`text-2xl font-bold mt-1 tabular-nums ${kpi.totalPagosCuenta > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                    {formatAmount(kpi.totalPagosCuenta, hideNumbers)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">Abonado sin asignar</p>
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total general</p>
-                  <p className="text-2xl font-bold mt-1 tabular-nums text-gray-800">{formatARS(kpi.pendiente + kpi.pagado)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{instFiados.length} fiados en total</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Saldo real</p>
+                  <p className={`text-2xl font-bold mt-1 tabular-nums ${kpi.saldoReal > 0 ? 'text-danger-700' : kpi.saldoReal < 0 ? 'text-success-700' : 'text-gray-400'}`}>
+                    {formatAmount(kpi.saldoReal, hideNumbers)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">Pendiente − pagos a cuenta</p>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total cobrado</p>
+                  <p className="text-2xl font-bold mt-1 tabular-nums text-success-700">{formatAmount(kpi.pagado, hideNumbers)}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{instFiados.filter((f) => f.paid).length} items cobrados</p>
                 </div>
               </div>
 
@@ -618,11 +692,16 @@ export default function Fiados() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Cobrar todo */}
+                    {/* Pago a cuenta */}
+                    <Button variant="secondary" size="sm" onClick={() => setPagoCuentaOpen(true)}>
+                      <Banknote size={14} />
+                      Pago a cuenta
+                    </Button>
+                  {/* Cobrar todo */}
                     {kpi.countPendiente > 0 && (
                       <Button variant="success" size="sm" onClick={() => setConfirmAllOpen(true)}>
                         <CheckCircle2 size={14} />
-                        Cobrar todo · {formatARS(kpi.pendiente)}
+                        Cobrar todo · {formatAmount(kpi.pendiente, hideNumbers)}
                       </Button>
                     )}
                   {/* Status filter */}
@@ -686,11 +765,11 @@ export default function Fiados() {
                               </td>
                               <td className="px-4 py-3 tabular-nums whitespace-nowrap">
                                 <span className={`font-semibold ${f.paid ? 'text-success-700' : 'text-danger-700'}`}>
-                                  {formatARS(f.amount)}
+                                  {formatAmount(f.amount, hideNumbers)}
                                 </span>
                                 {!f.paid && f.amountPaid > 0 && (
                                   <div className="text-xs text-gray-400 mt-0.5">
-                                    Saldo: {formatARS(f.amount - f.amountPaid)}
+                                    Saldo: {formatAmount(f.amount - f.amountPaid, hideNumbers)}
                                   </div>
                                 )}
                               </td>
@@ -699,7 +778,7 @@ export default function Fiados() {
                                   <Badge variant="active">Cobrado</Badge>
                                 ) : f.amountPaid > 0 ? (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                    Parcial · {formatARS(f.amountPaid)}
+                                    Parcial · {formatAmount(f.amountPaid, hideNumbers)}
                                   </span>
                                 ) : (
                                   <Badge variant="egreso">Pendiente</Badge>
@@ -773,6 +852,39 @@ export default function Fiados() {
                   </div>
                 )}
               </div>
+
+              {/* Historial de pagos a cuenta */}
+              {pagosCuenta.filter(p => p.institucionId === selectedIdResolved).length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3 border-b border-gray-200">
+                    <span className="font-semibold text-gray-900 text-sm">Pagos a cuenta registrados</span>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {pagosCuenta
+                      .filter(p => p.institucionId === selectedIdResolved)
+                      .map(p => (
+                        <div key={p.id} className="flex items-center justify-between px-5 py-3">
+                          <div>
+                            <span className="font-semibold text-amber-700 tabular-nums">{formatAmount(p.monto, hideNumbers)}</span>
+                            {p.nota && <span className="text-sm text-gray-500 ml-2">— {p.nota}</span>}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-400">{new Date(p.createdAt).toLocaleDateString('es-AR')}</span>
+                            {isAdmin && (
+                              <button
+                                onClick={async () => { try { await deletePagoCuenta(p.id); addToast('Pago a cuenta eliminado', 'info') } catch { addToast('Error al eliminar', 'error') } }}
+                                className="p-1.5 bg-danger-50 text-danger-600 hover:bg-danger-100 rounded-lg transition-colors"
+                                title="Eliminar"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>
@@ -796,11 +908,17 @@ export default function Fiados() {
         onSave={(amount) => handlePartialPay(partialPayModal.fiado, amount)}
       />
 
+      <PagoCuentaModal
+        isOpen={pagoCuentaOpen}
+        onClose={() => setPagoCuentaOpen(false)}
+        institucionId={selectedIdResolved}
+      />
+
       {/* Confirm mark all paid */}
       <Modal isOpen={confirmAllOpen} onClose={() => setConfirmAllOpen(false)} title="Cobrar todo el saldo pendiente" size="sm">
         <div className="flex flex-col gap-4">
           <div className="bg-success-50 border border-success-200 rounded-xl p-4 text-center">
-            <p className="text-3xl font-bold text-success-700 tabular-nums">{formatARS(kpi.pendiente)}</p>
+            <p className="text-3xl font-bold text-success-700 tabular-nums">{formatAmount(kpi.pendiente, hideNumbers)}</p>
             <p className="text-sm text-success-600 mt-1">{kpi.countPendiente} items pendientes · {selected?.name}</p>
           </div>
           <p className="text-sm text-gray-600 text-center">
