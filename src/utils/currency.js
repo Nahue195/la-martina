@@ -13,3 +13,7 @@ export function parseAmount(str) {
   const val = parseFloat(cleaned)
   return isNaN(val) ? 0 : val
 }
+
+export function formatAmount(value, hide) {
+  return hide ? '$ ••••' : formatARS(value)
+}
