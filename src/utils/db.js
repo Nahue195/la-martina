@@ -78,6 +78,43 @@ function mapCierre(c) {
   }
 }
 
+function mapGastoFijo(g) {
+  return {
+    id: g.id,
+    nombre: g.nombre,
+    montoEstimado: Number(g.monto_estimado || 0),
+    activo: g.activo,
+    sortOrder: g.sort_order,
+    createdAt: g.created_at,
+  }
+}
+
+function mapGastoMes(g) {
+  return {
+    id: g.id,
+    gastoFijoId: g.gasto_fijo_id,
+    nombre: g.nombre,
+    monto: Number(g.monto || 0),
+    mes: g.mes,
+    pagado: g.pagado,
+    pagadoAt: g.pagado_at,
+    nota: g.nota,
+    createdBy: g.created_by,
+    createdAt: g.created_at,
+  }
+}
+
+function mapPagoCuenta(p) {
+  return {
+    id: p.id,
+    institucionId: p.institucion_id,
+    monto: Number(p.monto || 0),
+    nota: p.nota,
+    createdBy: p.created_by,
+    createdAt: p.created_at,
+  }
+}
+
 // --- DB API ---
 
 export const db = {
@@ -532,6 +569,113 @@ export const db = {
     },
     delete: async (id) => {
       const { error } = await supabase.from('cierres_caja').delete().eq('id', id)
+      if (error) throw error
+    },
+  },
+
+  gastosFijos: {
+    getAll: async () => {
+      const { data, error } = await supabase.from('gastos_fijos').select('*').order('sort_order', { ascending: true })
+      if (error) throw error
+      return data.map(mapGastoFijo)
+    },
+    create: async (data) => {
+      const { data: maxRow } = await supabase.from('gastos_fijos').select('sort_order').order('sort_order', { ascending: false }).limit(1).single()
+      const nextSort = (maxRow?.sort_order ?? 0) + 1
+      const { data: row, error } = await supabase.from('gastos_fijos').insert({
+        nombre: data.nombre,
+        monto_estimado: data.montoEstimado || 0,
+        activo: data.activo ?? true,
+        sort_order: nextSort,
+      }).select().single()
+      if (error) throw error
+      return mapGastoFijo(row)
+    },
+    update: async (id, data) => {
+      const patch = {}
+      if (data.nombre !== undefined) patch.nombre = data.nombre
+      if (data.montoEstimado !== undefined) patch.monto_estimado = data.montoEstimado
+      if (data.activo !== undefined) patch.activo = data.activo
+      const { data: row, error } = await supabase.from('gastos_fijos').update(patch).eq('id', id).select().single()
+      if (error) throw error
+      return mapGastoFijo(row)
+    },
+    delete: async (id) => {
+      const { error } = await supabase.from('gastos_fijos').delete().eq('id', id)
+      if (error) throw error
+    },
+  },
+
+  gastosMes: {
+    getAll: async () => {
+      const { data, error } = await supabase.from('gastos_mes').select('*').order('created_at', { ascending: true })
+      if (error) throw error
+      return data.map(mapGastoMes)
+    },
+    seedMonth: async (mes, gastosFijos, createdBy) => {
+      const rows = gastosFijos.filter(g => g.activo).map(g => ({
+        gasto_fijo_id: g.id,
+        nombre: g.nombre,
+        monto: g.montoEstimado,
+        mes,
+        pagado: false,
+        created_by: createdBy,
+      }))
+      if (rows.length === 0) return []
+      const { data, error } = await supabase.from('gastos_mes').insert(rows).select()
+      if (error) throw error
+      return data.map(mapGastoMes)
+    },
+    create: async (data) => {
+      const { data: row, error } = await supabase.from('gastos_mes').insert({
+        gasto_fijo_id: data.gastoFijoId || null,
+        nombre: data.nombre,
+        monto: data.monto,
+        mes: data.mes,
+        pagado: data.pagado ?? false,
+        nota: data.nota || null,
+        created_by: data.createdBy,
+      }).select().single()
+      if (error) throw error
+      return mapGastoMes(row)
+    },
+    update: async (id, data) => {
+      const patch = {}
+      if (data.nombre !== undefined) patch.nombre = data.nombre
+      if (data.monto !== undefined) patch.monto = data.monto
+      if (data.nota !== undefined) patch.nota = data.nota || null
+      if (data.pagado !== undefined) {
+        patch.pagado = data.pagado
+        patch.pagado_at = data.pagado ? new Date().toISOString() : null
+      }
+      const { data: row, error } = await supabase.from('gastos_mes').update(patch).eq('id', id).select().single()
+      if (error) throw error
+      return mapGastoMes(row)
+    },
+    delete: async (id) => {
+      const { error } = await supabase.from('gastos_mes').delete().eq('id', id)
+      if (error) throw error
+    },
+  },
+
+  pagosCuenta: {
+    getAll: async () => {
+      const { data, error } = await supabase.from('pagos_cuenta').select('*').order('created_at', { ascending: false })
+      if (error) throw error
+      return data.map(mapPagoCuenta)
+    },
+    create: async (data) => {
+      const { data: row, error } = await supabase.from('pagos_cuenta').insert({
+        institucion_id: data.institucionId,
+        monto: data.monto,
+        nota: data.nota || null,
+        created_by: data.createdBy,
+      }).select().single()
+      if (error) throw error
+      return mapPagoCuenta(row)
+    },
+    delete: async (id) => {
+      const { error } = await supabase.from('pagos_cuenta').delete().eq('id', id)
       if (error) throw error
     },
   },
