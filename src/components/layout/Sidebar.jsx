@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowLeftRight, Tag, Users, BookOpen,
-  Printer, BarChart2, Package, GraduationCap, Paperclip,
+  Printer, BarChart2, Package, GraduationCap, Paperclip, Receipt,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -10,6 +10,7 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/movimientos', label: 'Movimientos', icon: ArrowLeftRight },
   { path: '/fiados', label: 'Fiados', icon: BookOpen },
+  { path: '/gastos', label: 'Gastos', icon: Receipt },
   { path: '/analytics', label: 'Analytics', icon: BarChart2 },
   { path: '/productos', label: 'Productos', icon: Package },
   { path: '/trabajos-colegio', label: 'Colegios', icon: GraduationCap },

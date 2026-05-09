@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
 import { ToastProvider } from './context/ToastContext'
+import { PrivacyProvider } from './context/PrivacyContext'
 import Layout from './components/layout/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -14,6 +15,7 @@ import Usuarios from './pages/Usuarios'
 import Productos from './pages/Productos'
 import TrabajosColegio from './pages/TrabajosColegio'
 import TrabajosAnillado from './pages/TrabajosAnillado'
+import GastosMes from './pages/GastosMes'
 
 function PrivateRoute({ children, adminOnly = false }) {
   const { user, isAdmin } = useAuth()
@@ -34,6 +36,7 @@ function AppRoutes() {
       <Route path="/productos" element={<PrivateRoute><Productos /></PrivateRoute>} />
       <Route path="/trabajos-colegio" element={<PrivateRoute><TrabajosColegio /></PrivateRoute>} />
       <Route path="/anillado" element={<PrivateRoute><TrabajosAnillado /></PrivateRoute>} />
+      <Route path="/gastos" element={<PrivateRoute><GastosMes /></PrivateRoute>} />
       <Route path="/categorias" element={<PrivateRoute adminOnly><Categorias /></PrivateRoute>} />
       <Route path="/usuarios" element={<PrivateRoute adminOnly><Usuarios /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -46,9 +49,11 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <DataProvider>
-          <ToastProvider>
-            <AppRoutes />
-          </ToastProvider>
+          <PrivacyProvider>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </PrivacyProvider>
         </DataProvider>
       </AuthProvider>
     </BrowserRouter>
