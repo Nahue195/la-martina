@@ -4,7 +4,8 @@ import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { formatDateTime } from '../utils/dateUtils'
-import { formatARS } from '../utils/currency'
+import { formatARS, formatAmount } from '../utils/currency'
+import { usePrivacy } from '../context/PrivacyContext'
 import { exportMovementsToCSV } from '../utils/export'
 import { minutesAgo } from '../utils/dateUtils'
 import Badge, { PAYMENT_BADGE } from '../components/ui/Badge'
@@ -20,6 +21,7 @@ export default function Movimientos() {
   const { movements, categories, users, deleteMovement } = useData()
   const { isAdmin, user } = useAuth()
   const { addToast } = useToast()
+  const { hideNumbers } = usePrivacy()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
@@ -165,16 +167,16 @@ export default function Movimientos() {
         <div className="flex items-center gap-6 bg-white rounded-xl border border-gray-200 px-5 py-3 shadow-sm text-sm">
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Ingresos:</span>
-            <span className="font-semibold text-success-700">{formatARS(totals.ing)}</span>
+            <span className="font-semibold text-success-700">{formatAmount(totals.ing, hideNumbers)}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Egresos:</span>
-            <span className="font-semibold text-danger-700">{formatARS(totals.eg)}</span>
+            <span className="font-semibold text-danger-700">{formatAmount(totals.eg, hideNumbers)}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Resultado:</span>
             <span className={`font-bold ${totals.resultado >= 0 ? 'text-success-700' : 'text-danger-700'}`}>
-              {formatARS(totals.resultado)}
+              {formatAmount(totals.resultado, hideNumbers)}
             </span>
           </div>
           <span className="ml-auto text-gray-400">Mostrando {paginated.length} de {filtered.length}</span>
@@ -216,7 +218,7 @@ export default function Movimientos() {
                         <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{cat?.name || '—'}</td>
                         <td className="px-4 py-3">{pb && <Badge variant={pb.variant}>{pb.label}</Badge>}</td>
                         <td className={`px-4 py-3 font-semibold tabular-nums whitespace-nowrap ${m.type === 'Ingreso' ? 'text-success-700' : 'text-danger-700'}`}>
-                          {m.type === 'Egreso' ? '-' : '+'}{formatARS(m.amount)}
+                          {m.type === 'Egreso' ? '-' : '+'}{formatAmount(m.amount, hideNumbers)}
                         </td>
                         <td className="px-4 py-3 text-gray-500 max-w-[200px]">
                           <span className="truncate block">{m.note || '—'}</span>
@@ -269,7 +271,7 @@ export default function Movimientos() {
 
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Eliminar movimiento" size="sm">
         <p className="text-gray-600 mb-6">
-          ¿Eliminás el movimiento de <strong>{formatARS(deleteTarget?.amount)}</strong>? Esta acción no se puede deshacer.
+          ¿Eliminás el movimiento de <strong>{formatAmount(deleteTarget?.amount, hideNumbers)}</strong>? Esta acción no se puede deshacer.
         </p>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={() => setDeleteTarget(null)} className="flex-1" disabled={deleting}>
