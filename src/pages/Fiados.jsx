@@ -540,7 +540,7 @@ export default function Fiados() {
     setMarkingAll(true)
     try {
       await markAllFiadosPaid(selectedIdResolved)
-      addToast(`Se acreditaron ${kpi.countPendiente} fiados por ${formatARS(kpi.pendiente)}`, 'success')
+      addToast(`Se acreditaron ${kpi.countPendiente} fiados por ${formatARS(kpi.saldoReal)}`, 'success')
       setConfirmAllOpen(false)
     } catch {
       addToast('Error al acreditar. Revisá la conexión.', 'error')
@@ -698,10 +698,10 @@ export default function Fiados() {
                       Pago a cuenta
                     </Button>
                   {/* Cobrar todo */}
-                    {kpi.countPendiente > 0 && (
+                    {kpi.saldoReal > 0 && (
                       <Button variant="success" size="sm" onClick={() => setConfirmAllOpen(true)}>
                         <CheckCircle2 size={14} />
-                        Cobrar todo · {formatAmount(kpi.pendiente, hideNumbers)}
+                        Cobrar todo · {formatAmount(kpi.saldoReal, hideNumbers)}
                       </Button>
                     )}
                   {/* Status filter */}
@@ -918,7 +918,7 @@ export default function Fiados() {
       <Modal isOpen={confirmAllOpen} onClose={() => setConfirmAllOpen(false)} title="Cobrar todo el saldo pendiente" size="sm">
         <div className="flex flex-col gap-4">
           <div className="bg-success-50 border border-success-200 rounded-xl p-4 text-center">
-            <p className="text-3xl font-bold text-success-700 tabular-nums">{formatAmount(kpi.pendiente, hideNumbers)}</p>
+            <p className="text-3xl font-bold text-success-700 tabular-nums">{formatAmount(kpi.saldoReal, hideNumbers)}</p>
             <p className="text-sm text-success-600 mt-1">{kpi.countPendiente} items pendientes · {selected?.name}</p>
           </div>
           <p className="text-sm text-gray-600 text-center">
