@@ -197,7 +197,7 @@ function CategoryTable({ title, variant, items, onEdit, onDelete, onToggle }) {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {items.map((cat) => (
-              <tr key={cat.id} className="hover:bg-gray-50 transition-colors group">
+              <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3 font-medium text-gray-800">{cat.name}</td>
                 <td className="px-4 py-3">
                   <button onClick={() => onToggle(cat)} className="hover:opacity-80 transition-opacity">
@@ -205,11 +205,11 @@ function CategoryTable({ title, variant, items, onEdit, onDelete, onToggle }) {
                   </button>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
-                    <button onClick={() => onEdit(cat)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Editar">
+                  <div className="flex items-center gap-1 justify-end">
+                    <button onClick={() => onEdit(cat)} className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors" title="Editar">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => onDelete(cat)} className="p-1.5 text-gray-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg" title="Eliminar">
+                    <button onClick={() => onDelete(cat)} className="p-1.5 bg-danger-50 text-danger-600 hover:bg-danger-100 rounded-lg transition-colors" title="Eliminar">
                       <Trash2 size={14} />
                     </button>
                   </div>

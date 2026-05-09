@@ -447,7 +447,7 @@ export default function TrabajosAnillado() {
                     <React.Fragment key={item.id}>
                       {/* Main row */}
                       <tr
-                        className={`group border-b border-gray-50 transition-colors cursor-pointer ${isExpanded ? 'bg-violet-50' : baseRow || 'hover:bg-gray-50'}`}
+                        className={`border-b border-gray-50 transition-colors cursor-pointer ${isExpanded ? 'bg-violet-50' : baseRow || 'hover:bg-gray-50'}`}
                         onClick={() => toggleRow(item.id)}
                       >
                         <td className="px-5 py-3">
@@ -499,17 +499,17 @@ export default function TrabajosAnillado() {
                           }
                         </td>
                         <td className="px-5 py-3" onClick={e => e.stopPropagation()}>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
+                          <div className="flex items-center gap-1 justify-end">
                             <button
                               onClick={() => openEdit(item)}
-                              className="p-1.5 rounded-lg hover:bg-white/80 text-gray-500 hover:text-gray-700 transition-colors"
+                              className="p-1.5 rounded-lg bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
                               title="Editar"
                             >
                               <Edit2 size={14} />
                             </button>
                             <button
                               onClick={() => setDeleteId(item.id)}
-                              className="p-1.5 rounded-lg hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors"
+                              className="p-1.5 rounded-lg bg-danger-50 text-danger-600 hover:bg-danger-100 transition-colors"
                               title="Eliminar"
                             >
                               <Trash2 size={14} />

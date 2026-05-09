@@ -120,7 +120,7 @@ export default function Usuarios() {
             {users.map((u) => {
               const isSelf = u.id === authUser?.id
               return (
-                <tr key={u.id} className="hover:bg-gray-50 transition-colors group">
+                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
@@ -138,12 +138,12 @@ export default function Usuarios() {
                   <td className="px-5 py-4"><Badge variant={u.role === 'Admin' ? 'admin' : 'empleado'}>{u.role}</Badge></td>
                   <td className="px-5 py-4 text-gray-500 text-xs">{formatDate(u.createdAt)}</td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEdit(u)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Editar">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => openEdit(u)} className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors" title="Editar">
                         <Pencil size={14} />
                       </button>
                       {!isSelf && (
-                        <button onClick={() => setDeleteTarget(u)} className="p-1.5 text-gray-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg" title="Eliminar">
+                        <button onClick={() => setDeleteTarget(u)} className="p-1.5 bg-danger-50 text-danger-600 hover:bg-danger-100 rounded-lg transition-colors" title="Eliminar">
                           <Trash2 size={14} />
                         </button>
                       )}

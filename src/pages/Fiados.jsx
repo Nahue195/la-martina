@@ -361,7 +361,7 @@ function ManageInstituciones({ isOpen, onClose }) {
                 const count = fiados.filter((f) => f.institucionId === inst.id).length
                 const pending = fiados.filter((f) => f.institucionId === inst.id && !f.paid).length
                 return (
-                  <div key={inst.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 group">
+                  <div key={inst.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50">
                     <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: inst.color }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-900 truncate">{inst.name}</p>
@@ -369,11 +369,11 @@ function ManageInstituciones({ isOpen, onClose }) {
                         {count} fiados · {pending} pendientes
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEdit(inst)} className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => openEdit(inst)} className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors">
                         <Pencil size={13} />
                       </button>
-                      <button onClick={() => setDeleteTarget(inst)} className="p-1.5 text-gray-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg">
+                      <button onClick={() => setDeleteTarget(inst)} className="p-1.5 bg-danger-50 text-danger-600 hover:bg-danger-100 rounded-lg transition-colors">
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -756,7 +756,7 @@ export default function Fiados() {
                           const usr = null // users not in scope here, could add
                           const isToggling = togglingId === f.id
                           return (
-                            <tr key={f.id} className={`hover:bg-gray-50 transition-colors group ${f.paid ? 'opacity-70' : ''}`}>
+                            <tr key={f.id} className={`hover:bg-gray-50 transition-colors ${f.paid ? 'opacity-70' : ''}`}>
                               <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs tabular-nums">
                                 {formatDate(f.createdAt)}
                               </td>
@@ -792,12 +792,12 @@ export default function Fiados() {
                               </td>
                               <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">—</td>
                               <td className="px-4 py-3">
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-1">
                                   {/* Pago parcial (solo si pendiente) */}
                                   {!f.paid && (
                                     <button
                                       onClick={() => setPartialPayModal({ open: true, fiado: f })}
-                                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-amber-600 hover:bg-amber-50"
+                                      className="p-1.5 rounded-lg transition-colors bg-amber-50 text-amber-600 hover:bg-amber-100"
                                       title="Registrar pago parcial"
                                     >
                                       <Banknote size={14} />
@@ -809,8 +809,8 @@ export default function Fiados() {
                                     disabled={isToggling}
                                     className={`p-1.5 rounded-lg transition-colors ${
                                       f.paid
-                                        ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50'
-                                        : 'text-gray-400 hover:text-success-600 hover:bg-success-50'
+                                        ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                                        : 'bg-success-50 text-success-600 hover:bg-success-100'
                                     }`}
                                     title={f.paid ? 'Marcar como pendiente' : 'Marcar como cobrado total'}
                                   >
@@ -826,7 +826,7 @@ export default function Fiados() {
                                   {canEdit(f) && (
                                     <button
                                       onClick={() => setFiadoModal({ open: true, fiado: f })}
-                                      className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
+                                      className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors"
                                       title="Editar"
                                     >
                                       <Pencil size={14} />
@@ -836,7 +836,7 @@ export default function Fiados() {
                                   {isAdmin && (
                                     <button
                                       onClick={() => setDeleteTarget(f)}
-                                      className="p-1.5 text-gray-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg"
+                                      className="p-1.5 bg-danger-50 text-danger-600 hover:bg-danger-100 rounded-lg transition-colors"
                                       title="Eliminar"
                                     >
                                       <Trash2 size={14} />

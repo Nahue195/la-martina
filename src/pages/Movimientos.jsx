@@ -210,7 +210,7 @@ export default function Movimientos() {
                     const usr = users.find((u) => u.id === m.createdBy)
                     const pb = PAYMENT_BADGE[m.paymentMethod]
                     return (
-                      <tr key={m.id} className="hover:bg-gray-50 transition-colors group">
+                      <tr key={m.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap tabular-nums text-xs">{formatDateTime(m.createdAt)}</td>
                         <td className="px-4 py-3">
                           <Badge variant={m.type === 'Ingreso' ? 'ingreso' : 'egreso'}>{m.type}</Badge>
@@ -225,11 +225,11 @@ export default function Movimientos() {
                         </td>
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">{usr?.name || '—'}</td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1">
                             {canEdit(m) && (
                               <button
                                 onClick={() => { setEditTarget(m); setModalOpen(true) }}
-                                className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors"
                                 title="Editar"
                               >
                                 <Pencil size={14} />
@@ -238,7 +238,7 @@ export default function Movimientos() {
                             {isAdmin && (
                               <button
                                 onClick={() => setDeleteTarget(m)}
-                                className="p-1.5 text-gray-400 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors"
+                                className="p-1.5 bg-danger-50 text-danger-600 hover:bg-danger-100 rounded-lg transition-colors"
                                 title="Eliminar"
                               >
                                 <Trash2 size={14} />
