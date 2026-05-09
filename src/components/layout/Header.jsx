@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, LogOut, ChevronDown, Shield } from 'lucide-react'
+import { User, LogOut, ChevronDown, Shield, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { usePrivacy } from '../../context/PrivacyContext'
 
 export default function Header() {
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
+  const { hideNumbers, toggleHideNumbers } = usePrivacy()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -48,59 +50,77 @@ export default function Header() {
         )}
       </div>
 
-      <div className="relative" ref={ref}>
+      <div className="flex items-center gap-3">
+        {/* Botón ocultar números */}
         <button
-          onClick={() => setOpen((v) => !v)}
-          className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-colors text-sm font-medium"
+          onClick={toggleHideNumbers}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-colors"
           style={{
-            color: '#374151',
-            background: open ? '#f3f4f6' : 'transparent',
+            borderColor: hideNumbers ? '#d1d5db' : '#e5e7eb',
+            background: hideNumbers ? '#f3f4f6' : 'transparent',
+            color: hideNumbers ? '#374151' : '#9ca3af',
           }}
-          onMouseEnter={(e) => { if (!open) e.currentTarget.style.background = '#f9fafb' }}
-          onMouseLeave={(e) => { if (!open) e.currentTarget.style.background = 'transparent' }}
+          title={hideNumbers ? 'Mostrar montos' : 'Ocultar montos'}
         >
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{ background: 'rgba(249,115,22,0.12)', color: '#ea580c' }}
-          >
-            {user?.name?.charAt(0)?.toUpperCase() || <User size={14} />}
-          </div>
-          <span className="font-medium text-sm">{user?.name}</span>
-          <ChevronDown
-            size={14}
-            className={`transition-transform duration-200`}
-            style={{ color: '#9ca3af', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-          />
+          {hideNumbers ? <EyeOff size={14} /> : <Eye size={14} />}
+          {hideNumbers ? 'Oculto' : 'Visible'}
         </button>
 
-        {open && (
-          <div
-            className="absolute right-0 top-full mt-2 w-48 rounded-xl py-1 z-30"
+        {/* Dropdown usuario */}
+        <div className="relative" ref={ref}>
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-colors text-sm font-medium"
             style={{
-              background: '#ffffff',
-              border: '1px solid #ece9e3',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)',
+              color: '#374151',
+              background: open ? '#f3f4f6' : 'transparent',
             }}
+            onMouseEnter={(e) => { if (!open) e.currentTarget.style.background = '#f9fafb' }}
+            onMouseLeave={(e) => { if (!open) e.currentTarget.style.background = 'transparent' }}
           >
             <div
-              className="px-4 py-2.5"
-              style={{ borderBottom: '1px solid #f3f4f6' }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+              style={{ background: 'rgba(249,115,22,0.12)', color: '#ea580c' }}
             >
-              <p className="text-xs font-semibold text-gray-900">{user?.name}</p>
-              <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>{user?.role}</p>
+              {user?.name?.charAt(0)?.toUpperCase() || <User size={14} />}
             </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm transition-colors"
-              style={{ color: '#dc2626' }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+            <span className="font-medium text-sm">{user?.name}</span>
+            <ChevronDown
+              size={14}
+              className={`transition-transform duration-200`}
+              style={{ color: '#9ca3af', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            />
+          </button>
+
+          {open && (
+            <div
+              className="absolute right-0 top-full mt-2 w-48 rounded-xl py-1 z-30"
+              style={{
+                background: '#ffffff',
+                border: '1px solid #ece9e3',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06)',
+              }}
             >
-              <LogOut size={14} />
-              Cerrar sesión
-            </button>
-          </div>
-        )}
+              <div
+                className="px-4 py-2.5"
+                style={{ borderBottom: '1px solid #f3f4f6' }}
+              >
+                <p className="text-xs font-semibold text-gray-900">{user?.name}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#9ca3af' }}>{user?.role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm transition-colors"
+                style={{ color: '#dc2626' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2' }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <LogOut size={14} />
+                Cerrar sesión
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   )
