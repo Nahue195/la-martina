@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react'
 import { BarChart2, ChevronDown, Hash, CheckCircle2 } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { getDateRange, isInDateRange } from '../utils/dateUtils'
-import { formatARS } from '../utils/currency'
+import { formatAmount } from '../utils/currency'
+import { usePrivacy } from '../context/PrivacyContext'
 import KPICard from '../components/KPICard'
 import Badge, { PAYMENT_BADGE } from '../components/ui/Badge'
 import Input from '../components/ui/Input'
@@ -39,6 +40,7 @@ function getDatesInRange(start, end) {
 
 export default function Analytics() {
   const { movements, categories, users, cierres } = useData()
+  const { hideNumbers } = usePrivacy()
   const [period, setPeriod] = useState('semana')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
@@ -182,7 +184,7 @@ export default function Analytics() {
                       key={day.date}
                       className="flex items-end gap-px flex-1 group cursor-pointer"
                       onClick={() => day.movements.length > 0 && toggleDay(day.date)}
-                      title={`${day.date} · Ing: ${formatARS(day.ingresos)} · Egr: ${formatARS(day.egresos)}`}
+                      title={`${day.date} · Ing: ${formatAmount(day.ingresos, hideNumbers)} · Egr: ${formatAmount(day.egresos, hideNumbers)}`}
                     >
                       <div
                         className={`flex-1 rounded-t-sm transition-colors ${
@@ -272,10 +274,10 @@ export default function Analytics() {
                     </span>
                   </div>
                   <div className="flex-1 text-right text-sm font-medium text-success-700 tabular-nums">
-                    {formatARS(day.ingresos)}
+                    {formatAmount(day.ingresos, hideNumbers)}
                   </div>
                   <div className="flex-1 text-right text-sm font-medium text-danger-700 tabular-nums">
-                    {formatARS(day.egresos)}
+                    {formatAmount(day.egresos, hideNumbers)}
                   </div>
                   <div
                     className={`flex-1 text-right text-sm font-bold tabular-nums ${
@@ -286,7 +288,7 @@ export default function Analytics() {
                         : 'text-gray-500'
                     }`}
                   >
-                    {formatARS(day.resultado)}
+                    {formatAmount(day.resultado, hideNumbers)}
                   </div>
                   <div className="w-32 flex items-center justify-end gap-2">
                     {day.cierre ? (
@@ -368,7 +370,7 @@ export default function Analytics() {
                                     }`}
                                   >
                                     {m.type === 'Egreso' ? '-' : ''}
-                                    {formatARS(m.amount)}
+                                    {formatAmount(m.amount, hideNumbers)}
                                   </td>
                                   <td className="px-4 py-2.5 text-gray-500 max-w-[140px] truncate">
                                     {m.note || <span className="text-gray-300">—</span>}
@@ -401,17 +403,17 @@ export default function Analytics() {
                     {/* Day totals footer */}
                     <div className="px-6 py-3 bg-gray-100 border-t border-gray-200 flex items-center justify-end gap-6 text-xs font-semibold">
                       <span className="text-success-700 tabular-nums">
-                        Ingresos: {formatARS(day.ingresos)}
+                        Ingresos: {formatAmount(day.ingresos, hideNumbers)}
                       </span>
                       <span className="text-danger-700 tabular-nums">
-                        Egresos: {formatARS(day.egresos)}
+                        Egresos: {formatAmount(day.egresos, hideNumbers)}
                       </span>
                       <span
                         className={`tabular-nums ${
                           day.resultado >= 0 ? 'text-success-700' : 'text-danger-700'
                         }`}
                       >
-                        Resultado: {formatARS(day.resultado)}
+                        Resultado: {formatAmount(day.resultado, hideNumbers)}
                       </span>
                     </div>
                   </div>

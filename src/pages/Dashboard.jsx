@@ -7,7 +7,8 @@ import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { getDateRange, isInDateRange, formatDateTime, formatDate, toInputDate } from '../utils/dateUtils'
-import { formatARS } from '../utils/currency'
+import { formatAmount } from '../utils/currency'
+import { usePrivacy } from '../context/PrivacyContext'
 import KPICard from '../components/KPICard'
 import Badge, { PAYMENT_BADGE } from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const { movements, categories, users, cierres, createCierre, deleteCierre, cycleStart, setCycleStart } = useData()
   const { user, isAdmin } = useAuth()
   const { addToast } = useToast()
+  const { hideNumbers } = usePrivacy()
 
   const [dateFilter, setDateFilter] = useState('hoy')
   const [customStart, setCustomStart] = useState('')
@@ -325,7 +327,7 @@ export default function Dashboard() {
                         }`}
                       >
                         {m.type === 'Egreso' ? '-' : ''}
-                        {formatARS(m.amount)}
+                        {formatAmount(m.amount, hideNumbers)}
                       </td>
                       <td className="px-4 py-3 text-gray-500 max-w-[180px] truncate">
                         {m.note || <span className="text-gray-300">—</span>}
@@ -357,28 +359,28 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 divide-x divide-y divide-gray-100">
               <div className="px-4 py-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Ingresos</p>
-                <p className="text-lg font-bold text-success-700 tabular-nums mt-0.5">{formatARS(kpi.ingresos)}</p>
+                <p className="text-lg font-bold text-success-700 tabular-nums mt-0.5">{formatAmount(kpi.ingresos, hideNumbers)}</p>
               </div>
               <div className="px-4 py-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Egresos</p>
-                <p className="text-lg font-bold text-danger-700 tabular-nums mt-0.5">{formatARS(kpi.egresos)}</p>
+                <p className="text-lg font-bold text-danger-700 tabular-nums mt-0.5">{formatAmount(kpi.egresos, hideNumbers)}</p>
               </div>
               <div className="px-4 py-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Efectivo</p>
-                <p className="text-base font-semibold text-gray-800 tabular-nums mt-0.5">{formatARS(kpi.cash)}</p>
+                <p className="text-base font-semibold text-gray-800 tabular-nums mt-0.5">{formatAmount(kpi.cash, hideNumbers)}</p>
               </div>
               <div className="px-4 py-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">QR / Transfer.</p>
-                <p className="text-base font-semibold text-gray-800 tabular-nums mt-0.5">{formatARS(kpi.qr)}</p>
+                <p className="text-base font-semibold text-gray-800 tabular-nums mt-0.5">{formatAmount(kpi.qr, hideNumbers)}</p>
               </div>
               <div className="px-4 py-3">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Tarjeta</p>
-                <p className="text-base font-semibold text-gray-800 tabular-nums mt-0.5">{formatARS(kpi.card)}</p>
+                <p className="text-base font-semibold text-gray-800 tabular-nums mt-0.5">{formatAmount(kpi.card, hideNumbers)}</p>
               </div>
               <div className="px-4 py-3 bg-primary-50">
                 <p className="text-xs text-primary-600 uppercase tracking-wider font-semibold">Resultado</p>
                 <p className={`text-base font-bold tabular-nums mt-0.5 ${kpi.resultado >= 0 ? 'text-success-700' : 'text-danger-700'}`}>
-                  {formatARS(kpi.resultado)}
+                  {formatAmount(kpi.resultado, hideNumbers)}
                 </p>
               </div>
             </div>
