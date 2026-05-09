@@ -1,6 +1,7 @@
 import React from 'react'
-import { formatARS } from '../utils/currency'
+import { formatAmount } from '../utils/currency'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { usePrivacy } from '../context/PrivacyContext'
 
 const VARIANTS = {
   ingreso: {
@@ -76,6 +77,7 @@ const VARIANTS = {
 }
 
 export default function KPICard({ label, amount, variant = 'neutral', icon: Icon, subtitle }) {
+  const { hideNumbers } = usePrivacy()
   const isPositive = amount > 0
   const isNegative = amount < 0
 
@@ -126,7 +128,7 @@ export default function KPICard({ label, amount, variant = 'neutral', icon: Icon
             className="text-2xl font-bold mt-1.5 tabular-nums leading-none"
             style={{ color: v.amountColor }}
           >
-            {formatARS(amount)}
+            {formatAmount(amount, hideNumbers)}
           </p>
           {subtitle && (
             <p className="text-xs mt-1" style={{ color: v.label }}>
