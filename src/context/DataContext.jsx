@@ -14,6 +14,9 @@ export function DataProvider({ children }) {
   const [config, setConfig] = useState({ cycleStart: null })
   const [trabajosColegio, setTrabajosColegio] = useState([])
   const [trabajosAnillado, setTrabajosAnillado] = useState([])
+  const [gastosFijos, setGastosFijos] = useState([])
+  const [gastosMes, setGastosMes] = useState([])
+  const [pagosCuenta, setPagosCuenta] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
 
@@ -45,6 +48,15 @@ export function DataProvider({ children }) {
   const refreshTrabajosAnillado = useCallback(async () => {
     try { setTrabajosAnillado(await db.trabajosAnillado.getAll()) } catch { setTrabajosAnillado([]) }
   }, [])
+  const refreshGastosFijos = useCallback(async () => {
+    try { setGastosFijos(await db.gastosFijos.getAll()) } catch { setGastosFijos([]) }
+  }, [])
+  const refreshGastosMes = useCallback(async () => {
+    try { setGastosMes(await db.gastosMes.getAll()) } catch { setGastosMes([]) }
+  }, [])
+  const refreshPagosCuenta = useCallback(async () => {
+    try { setPagosCuenta(await db.pagosCuenta.getAll()) } catch { setPagosCuenta([]) }
+  }, [])
 
   // Initial load
   useEffect(() => {
@@ -60,6 +72,9 @@ export function DataProvider({ children }) {
           refreshConfig(),
           refreshTrabajosColegio(),
           refreshTrabajosAnillado(),
+          refreshGastosFijos(),
+          refreshGastosMes(),
+          refreshPagosCuenta(),
         ])
       } catch (err) {
         setLoadError('No se pudo conectar a la base de datos. Verificá la conexión.')
@@ -84,6 +99,9 @@ export function DataProvider({ children }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'configuracion' }, refreshConfig)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trabajos_colegio' }, refreshTrabajosColegio)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trabajos_anillado' }, refreshTrabajosAnillado)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos_fijos' }, refreshGastosFijos)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos_mes' }, refreshGastosMes)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_cuenta' }, refreshPagosCuenta)
       .subscribe()
     return () => supabase.removeChannel(channel)
   }, [refreshMovements, refreshCategories, refreshUsers, refreshInstituciones, refreshFiados])
@@ -133,6 +151,25 @@ export function DataProvider({ children }) {
   const updateTrabajoAnillado = useCallback(async (id, data) => { await db.trabajosAnillado.update(id, data); await refreshTrabajosAnillado() }, [refreshTrabajosAnillado])
   const deleteTrabajoAnillado = useCallback(async (id) => { await db.trabajosAnillado.delete(id); await refreshTrabajosAnillado() }, [refreshTrabajosAnillado])
 
+  // --- Gastos Fijos ---
+  const createGastoFijo = useCallback(async (data) => { const item = await db.gastosFijos.create(data); await refreshGastosFijos(); return item }, [refreshGastosFijos])
+  const updateGastoFijo = useCallback(async (id, data) => { await db.gastosFijos.update(id, data); await refreshGastosFijos() }, [refreshGastosFijos])
+  const deleteGastoFijo = useCallback(async (id) => { await db.gastosFijos.delete(id); await refreshGastosFijos() }, [refreshGastosFijos])
+
+  // --- Gastos Mes ---
+  const createGastoMes = useCallback(async (data) => { const item = await db.gastosMes.create(data); await refreshGastosMes(); return item }, [refreshGastosMes])
+  const updateGastoMes = useCallback(async (id, data) => { await db.gastosMes.update(id, data); await refreshGastosMes() }, [refreshGastosMes])
+  const deleteGastoMes = useCallback(async (id) => { await db.gastosMes.delete(id); await refreshGastosMes() }, [refreshGastosMes])
+  const seedGastosMes = useCallback(async (mes, gastosFijosActuales, userId) => {
+    const items = await db.gastosMes.seedMonth(mes, gastosFijosActuales, userId)
+    await refreshGastosMes()
+    return items
+  }, [refreshGastosMes])
+
+  // --- Pagos Cuenta ---
+  const createPagoCuenta = useCallback(async (data) => { const item = await db.pagosCuenta.create(data); await refreshPagosCuenta(); return item }, [refreshPagosCuenta])
+  const deletePagoCuenta = useCallback(async (id) => { await db.pagosCuenta.delete(id); await refreshPagosCuenta() }, [refreshPagosCuenta])
+
   return (
     <DataContext.Provider value={{
       movements: visibleMovements, allMovements: movements,
@@ -149,6 +186,10 @@ export function DataProvider({ children }) {
       createCierre, deleteCierre,
       createTrabajoColegio, updateTrabajoColegio, deleteTrabajoColegio,
       createTrabajoAnillado, updateTrabajoAnillado, deleteTrabajoAnillado,
+      gastosFijos, gastosMes, pagosCuenta,
+      createGastoFijo, updateGastoFijo, deleteGastoFijo,
+      createGastoMes, updateGastoMes, deleteGastoMes, seedGastosMes,
+      createPagoCuenta, deletePagoCuenta,
       refreshMovements, refreshCategories, refreshUsers, refreshInstituciones, refreshFiados, refreshCierres,
     }}>
       {children}
