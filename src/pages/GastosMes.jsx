@@ -277,7 +277,7 @@ function PlantillasModal({ isOpen, onClose }) {
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function GastosMes() {
-  const { gastosFijos, gastosMes, updateGastoMes, deleteGastoMes, seedGastosMes } = useData()
+  const { gastosFijos, gastosMes, updateGastoMes, deleteGastoMes, seedGastosMes, createMovement } = useData()
   const { isAdmin, user } = useAuth()
   const { addToast } = useToast()
   const { hideNumbers } = usePrivacy()
@@ -289,6 +289,9 @@ export default function GastosMes() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [togglingId, setTogglingId] = useState(null)
+  const [pagoModal, setPagoModal] = useState({ open: false, gasto: null })
+  const [pagoMethod, setPagoMethod] = useState('Cash')
+  const [confirmingPago, setConfirmingPago] = useState(false)
 
   const mesGastos = useMemo(() => gastosMes.filter(g => g.mes === mes), [gastosMes, mes])
   const activeTemplates = useMemo(() => gastosFijos.filter(g => g.activo), [gastosFijos])
@@ -310,13 +313,38 @@ export default function GastosMes() {
   }, [mesGastos])
 
   async function togglePagado(g) {
+    // Solo para revertir (pagado → pendiente), sin crear movimiento
     setTogglingId(g.id)
     try {
-      await updateGastoMes(g.id, { pagado: !g.pagado })
+      await updateGastoMes(g.id, { pagado: false })
+      addToast('Gasto revertido a pendiente', 'info')
     } catch {
       addToast('Error al actualizar', 'error')
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  async function handleConfirmarPago() {
+    const g = pagoModal.gasto
+    if (!g) return
+    setConfirmingPago(true)
+    try {
+      await createMovement({
+        type: 'Egreso',
+        amount: g.monto,
+        paymentMethod: pagoMethod,
+        categoryId: null,
+        note: g.nombre,
+        createdBy: user.id,
+      })
+      await updateGastoMes(g.id, { pagado: true })
+      setPagoModal({ open: false, gasto: null })
+      addToast('Pago registrado como egreso en Movimientos', 'success')
+    } catch {
+      addToast('Error al registrar el pago', 'error')
+    } finally {
+      setConfirmingPago(false)
     }
   }
 
@@ -447,7 +475,7 @@ export default function GastosMes() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => togglePagado(g)}
+                          onClick={() => g.pagado ? togglePagado(g) : setPagoModal({ open: true, gasto: g })}
                           disabled={togglingId === g.id}
                           className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
                             g.pagado
@@ -494,6 +522,47 @@ export default function GastosMes() {
       />
 
       <PlantillasModal isOpen={plantillasOpen} onClose={() => setPlantillasOpen(false)} />
+
+      {/* Modal: registrar pago como egreso */}
+      <Modal isOpen={pagoModal.open} onClose={() => setPagoModal({ open: false, gasto: null })} title="Registrar pago" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Se registrará un egreso de{' '}
+            <strong className="text-gray-800">{pagoModal.gasto ? formatARS(pagoModal.gasto.monto) : ''}</strong>
+            {' '}por <strong className="text-gray-800">{pagoModal.gasto?.nombre}</strong> en Movimientos.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Método de pago</label>
+            <div className="flex gap-2">
+              {[
+                { key: 'Cash', label: 'Efectivo' },
+                { key: 'QRTransfer', label: 'QR / Transfer.' },
+                { key: 'Card', label: 'Tarjeta' },
+              ].map(m => (
+                <button
+                  key={m.key}
+                  onClick={() => setPagoMethod(m.key)}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg border transition-colors ${
+                    pagoMethod === m.key
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-3 pt-1">
+            <Button variant="secondary" onClick={() => setPagoModal({ open: false, gasto: null })} className="flex-1" disabled={confirmingPago}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmarPago} className="flex-1" disabled={confirmingPago}>
+              {confirmingPago ? <><Loader2 size={14} className="animate-spin" /> Registrando...</> : 'Confirmar pago'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Eliminar gasto" size="sm">
         <p className="text-gray-600 mb-6">
