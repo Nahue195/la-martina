@@ -349,7 +349,7 @@ export const db = {
     create: async (data) => {
       const { data: maxRow } = await supabase.from('productos').select('sort_order').order('sort_order', { ascending: false }).limit(1).single()
       const nextSort = (maxRow?.sort_order ?? 0) + 1
-      const { data: row, error } = await supabase.from('productos').insert({ name: data.name, price: data.price, category: data.category, description: data.description || null, active: data.active ?? true, sort_order: nextSort }).select().single()
+      const { data: row, error } = await supabase.from('productos').insert({ name: data.name, price: data.price, category: data.category, description: data.description || null, active: data.active ?? true, sort_order: nextSort, barcode: data.barcode || null }).select().single()
       if (error) throw error
       return mapProducto(row)
     },
@@ -360,6 +360,7 @@ export const db = {
       if (data.category !== undefined) patch.category = data.category
       if (data.description !== undefined) patch.description = data.description || null
       if (data.active !== undefined) patch.active = data.active
+      if (data.barcode !== undefined) patch.barcode = data.barcode || null
       const { data: row, error } = await supabase.from('productos').update(patch).eq('id', id).select().single()
       if (error) throw error
       return mapProducto(row)
