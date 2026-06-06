@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, X, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
@@ -18,9 +18,7 @@ export default function Pedidos() {
 
   const debounceRef = useRef(null)
 
-  useEffect(() => { fetchHistorial() }, [])
-
-  const fetchHistorial = async () => {
+  const fetchHistorial = useCallback(async () => {
     try {
       const items = await db.pedidos.getHistorial()
       const grouped = {}
@@ -32,7 +30,13 @@ export default function Pedidos() {
     } catch {
       setHistorial([])
     }
-  }
+  }, [])
+
+  useEffect(() => { fetchHistorial() }, [fetchHistorial])
+
+  useEffect(() => {
+    fetchHistorial()
+  }, [pedidoActivos.length, fetchHistorial])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)

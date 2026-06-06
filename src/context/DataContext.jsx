@@ -110,7 +110,7 @@ export function DataProvider({ children }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_items' }, refreshPedidos)
       .subscribe()
     return () => supabase.removeChannel(channel)
-  }, [refreshMovements, refreshCategories, refreshUsers, refreshInstituciones, refreshFiados])
+  }, [refreshMovements, refreshCategories, refreshUsers, refreshInstituciones, refreshFiados, refreshPedidos])
 
   // --- Movements ---
   const createMovement = useCallback(async (data) => { const item = await db.movements.create(data); await refreshMovements(); return item }, [refreshMovements])
