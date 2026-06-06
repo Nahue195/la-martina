@@ -213,9 +213,20 @@ export const db = {
 
   movements: {
     getAll: async () => {
-      const { data, error } = await supabase.from('movimientos').select('*').order('created_at', { ascending: false }).limit(10000)
-      if (error) throw error
-      return data.map(mapMovement)
+      const all = []
+      const PAGE = 1000
+      let from = 0
+      while (true) {
+        const { data, error } = await supabase
+          .from('movimientos').select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + PAGE - 1)
+        if (error) throw error
+        all.push(...data)
+        if (data.length < PAGE) break
+        from += PAGE
+      }
+      return all.map(mapMovement)
     },
     getById: async (id) => {
       const { data, error } = await supabase.from('movimientos').select('*').eq('id', id).single()
