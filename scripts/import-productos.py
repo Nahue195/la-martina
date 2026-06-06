@@ -1,6 +1,5 @@
 import openpyxl
 import requests
-import json
 from pathlib import Path
 
 # Leer .env desde la raíz del proyecto
@@ -17,7 +16,6 @@ SUPABASE_KEY = env['VITE_SUPABASE_ANON_KEY']
 HEADERS = {
     'apikey': SUPABASE_KEY,
     'Authorization': f'Bearer {SUPABASE_KEY}',
-    'Content-Type': 'application/json',
 }
 
 def _parse_barcode(barcode):
@@ -51,17 +49,23 @@ for i, row in enumerate(ws.iter_rows(values_only=True)):
         'category': 'Otros',
         'description': None,
         'active': True,
-        'sort_order': i,
+        'sort_order': len(rows),
         'barcode': _parse_barcode(barcode),
     })
 
 print(f'Productos leídos del Excel: {len(rows)}')
+
+confirm = input(f'Se van a borrar TODOS los productos existentes y reimportar {len(rows)} nuevos. Continuar? (s/N): ')
+if confirm.strip().lower() != 's':
+    print('Cancelado.')
+    exit(0)
 
 # Eliminar todos los productos existentes
 print('Eliminando productos existentes...')
 resp = requests.delete(
     f'{SUPABASE_URL}/rest/v1/productos?id=not.is.null',
     headers={**HEADERS, 'Prefer': 'return=minimal'},
+    timeout=30,
 )
 print(f'Delete status: {resp.status_code}')
 if resp.status_code not in (200, 204):
@@ -76,7 +80,8 @@ for i in range(0, len(rows), BATCH):
     resp = requests.post(
         f'{SUPABASE_URL}/rest/v1/productos',
         headers={**HEADERS, 'Prefer': 'return=minimal'},
-        data=json.dumps(batch),
+        json=batch,
+        timeout=30,
     )
     if resp.status_code not in (200, 201):
         print(f'Error en batch {i // BATCH + 1}: {resp.text}')
