@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { Package, Plus, Search, Pencil, Trash2, X, Tag, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Package, Plus, Search, Pencil, Trash2, X, Tag, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { useData } from '../context/DataContext'
@@ -70,7 +70,7 @@ function ProductoModal({ isOpen, onClose, initial, onSave, saving }) {
 }
 
 export default function Productos() {
-  const { createProducto, updateProducto, deleteProducto } = useData()
+  const { createProducto, updateProducto, deleteProducto, pedidoActivos, addToPedido, removeFromPedido } = useData()
   const { isAdmin } = useAuth()
   const { addToast } = useToast()
 
@@ -89,6 +89,7 @@ export default function Productos() {
   const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  const [pedidoLoadingId, setPedidoLoadingId] = useState(null)
 
   const debounceRef = useRef(null)
 
@@ -167,6 +168,24 @@ export default function Productos() {
       addToast('Error al eliminar', 'error')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const isInPedido = (productoId) => pedidoActivos.some(p => p.productoId === productoId)
+
+  const handleTogglePedido = async (p) => {
+    setPedidoLoadingId(p.id)
+    try {
+      if (isInPedido(p.id)) {
+        const item = pedidoActivos.find(i => i.productoId === p.id)
+        await removeFromPedido(item.id)
+      } else {
+        await addToPedido(p.id)
+      }
+    } catch {
+      addToast('Error al actualizar el pedido', 'error')
+    } finally {
+      setPedidoLoadingId(null)
     }
   }
 
@@ -277,18 +296,39 @@ export default function Productos() {
                   {formatARS(p.price)}
                 </p>
 
-                {isAdmin && (
-                  <div className="flex gap-1 pt-1 border-t border-gray-100 mt-1">
-                    <button onClick={() => openEdit(p)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
-                      <Pencil size={13} />
-                      Editar
-                    </button>
-                    <button onClick={() => handleDelete(p.id)} disabled={deletingId === p.id} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs text-gray-500 hover:text-danger-600 hover:bg-danger-50 rounded-lg transition-colors disabled:opacity-40">
-                      <Trash2 size={13} />
-                      {deletingId === p.id ? '...' : 'Eliminar'}
-                    </button>
-                  </div>
-                )}
+                <div className="pt-1 border-t border-gray-100 mt-1 space-y-1">
+                  <button
+                    onClick={() => handleTogglePedido(p)}
+                    disabled={pedidoLoadingId === p.id}
+                    className={`w-full flex items-center justify-center gap-1 py-1.5 text-xs rounded-lg transition-colors font-medium ${
+                      isInPedido(p.id)
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                    } disabled:opacity-40`}
+                  >
+                    <ClipboardList size={13} />
+                    {pedidoLoadingId === p.id ? '...' : isInPedido(p.id) ? '✓ En pedido' : 'Al pedido'}
+                  </button>
+                  {isAdmin && (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => openEdit(p)}
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors"
+                      >
+                        <Pencil size={13} />
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        disabled={deletingId === p.id}
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs bg-danger-50 text-danger-600 hover:bg-danger-100 rounded-lg transition-colors disabled:opacity-40"
+                      >
+                        <Trash2 size={13} />
+                        {deletingId === p.id ? '...' : 'Eliminar'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
