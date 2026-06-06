@@ -434,24 +434,32 @@ export default function GastosMes() {
                     <td className="px-4 py-3 font-medium text-gray-800">{g.nombre}</td>
                     <td className="px-4 py-3 tabular-nums font-semibold text-gray-800">{formatAmount(g.monto, hideNumbers)}</td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => togglePagado(g)}
-                        disabled={togglingId === g.id}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                          g.pagado ? 'bg-success-100 text-success-700 hover:bg-success-200' : 'bg-danger-100 text-danger-700 hover:bg-danger-200'
-                        }`}
-                      >
-                        {togglingId === g.id
-                          ? <Loader2 size={11} className="animate-spin" />
-                          : g.pagado ? <Check size={11} /> : null}
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        g.pagado ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'
+                      }`}>
+                        {g.pagado && <Check size={11} />}
                         {g.pagado ? 'Pagado' : 'Pendiente'}
-                      </button>
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-gray-500 max-w-[200px]">
                       <span className="truncate block">{g.nota || '—'}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => togglePagado(g)}
+                          disabled={togglingId === g.id}
+                          className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 ${
+                            g.pagado
+                              ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                              : 'bg-success-50 text-success-600 hover:bg-success-100'
+                          }`}
+                          title={g.pagado ? 'Revertir a pendiente' : 'Marcar como pagado'}
+                        >
+                          {togglingId === g.id
+                            ? <Loader2 size={14} className="animate-spin" />
+                            : <Check size={14} />}
+                        </button>
                         <button
                           onClick={() => setGastoModal({ open: true, gasto: g })}
                           className="p-1.5 bg-primary-50 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors"
