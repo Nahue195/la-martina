@@ -36,7 +36,7 @@ export default function Pedidos() {
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (!search.trim()) { setSearchResults([]); return }
+    if (!search.trim()) { setSearchResults([]); setSearching(false); return }
     debounceRef.current = setTimeout(async () => {
       setSearching(true)
       try {
