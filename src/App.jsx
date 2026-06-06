@@ -16,6 +16,7 @@ import Productos from './pages/Productos'
 import TrabajosColegio from './pages/TrabajosColegio'
 import TrabajosAnillado from './pages/TrabajosAnillado'
 import GastosMes from './pages/GastosMes'
+import Pedidos from './pages/Pedidos'
 
 function PrivateRoute({ children, adminOnly = false }) {
   const { user, isAdmin } = useAuth()
@@ -37,6 +38,7 @@ function AppRoutes() {
       <Route path="/trabajos-colegio" element={<PrivateRoute><TrabajosColegio /></PrivateRoute>} />
       <Route path="/anillado" element={<PrivateRoute><TrabajosAnillado /></PrivateRoute>} />
       <Route path="/gastos" element={<PrivateRoute><GastosMes /></PrivateRoute>} />
+      <Route path="/pedidos" element={<PrivateRoute><Pedidos /></PrivateRoute>} />
       <Route path="/categorias" element={<PrivateRoute adminOnly><Categorias /></PrivateRoute>} />
       <Route path="/usuarios" element={<PrivateRoute adminOnly><Usuarios /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
