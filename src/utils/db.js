@@ -23,7 +23,17 @@ function mapFiado(f) {
 }
 
 function mapProducto(p) {
-  return { id: p.id, name: p.name, price: Number(p.price), category: p.category, description: p.description, active: p.active, sortOrder: p.sort_order, createdAt: p.created_at }
+  return {
+    id: p.id,
+    name: p.name,
+    price: Number(p.price),
+    category: p.category,
+    description: p.description,
+    active: p.active,
+    sortOrder: p.sort_order,
+    createdAt: p.created_at,
+    barcode: p.barcode || null,
+  }
 }
 
 function mapTrabajoColegio(t) {
@@ -112,6 +122,18 @@ function mapPagoCuenta(p) {
     nota: p.nota,
     createdBy: p.created_by,
     createdAt: p.created_at,
+  }
+}
+
+function mapPedidoItem(p) {
+  return {
+    id: p.id,
+    productoId: p.producto_id,
+    estado: p.estado,
+    fechaPedido: p.fecha_pedido,
+    createdAt: p.created_at,
+    nombre: p.productos?.name || '',
+    categoria: p.productos?.category || '',
   }
 }
 
@@ -313,7 +335,7 @@ export const db = {
       let q = supabase.from('productos').select('*', { count: 'exact' })
       if (!showInactive) q = q.eq('active', true)
       if (category && category !== 'Todos') q = q.eq('category', category)
-      if (query && query.trim()) q = q.ilike('name', `%${query.trim()}%`)
+      if (query && query.trim()) q = q.or(`name.ilike.%${query.trim()}%,barcode.ilike.%${query.trim()}%`)
       q = q.order('name', { ascending: true }).range(offset, offset + limit - 1)
       const { data, error, count } = await q
       if (error) throw error
@@ -676,6 +698,48 @@ export const db = {
     },
     delete: async (id) => {
       const { error } = await supabase.from('pagos_cuenta').delete().eq('id', id)
+      if (error) throw error
+    },
+  },
+
+  pedidos: {
+    getActivos: async () => {
+      const { data, error } = await supabase
+        .from('pedido_items')
+        .select('*, productos(name, category)')
+        .eq('estado', 'pendiente')
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return data.map(mapPedidoItem)
+    },
+    getHistorial: async () => {
+      const { data, error } = await supabase
+        .from('pedido_items')
+        .select('*, productos(name, category)')
+        .eq('estado', 'pedido')
+        .order('fecha_pedido', { ascending: false })
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data.map(mapPedidoItem)
+    },
+    add: async (productoId) => {
+      const { error } = await supabase
+        .from('pedido_items')
+        .insert({ producto_id: productoId })
+      if (error && error.code === '23505') return  // ya está en la lista activa
+      if (error) throw error
+    },
+    remove: async (id) => {
+      const { error } = await supabase.from('pedido_items').delete().eq('id', id)
+      if (error) throw error
+    },
+    cerrarPedido: async (ids) => {
+      if (!ids.length) return
+      const today = new Date().toISOString().split('T')[0]
+      const { error } = await supabase
+        .from('pedido_items')
+        .update({ estado: 'pedido', fecha_pedido: today })
+        .in('id', ids)
       if (error) throw error
     },
   },
