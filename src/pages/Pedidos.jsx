@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Search, X, CheckCircle, ChevronDown, ChevronUp, ClipboardList } from 'lucide-react'
+import { Search, X, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { db } from '../utils/db'
