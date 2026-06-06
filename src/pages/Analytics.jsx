@@ -39,7 +39,7 @@ function getDatesInRange(start, end) {
 }
 
 export default function Analytics() {
-  const { movements, categories, users, cierres } = useData()
+  const { allMovements: movements, categories, users, cierres } = useData()
   const { hideNumbers } = usePrivacy()
   const [period, setPeriod] = useState('semana')
   const [customStart, setCustomStart] = useState('')
