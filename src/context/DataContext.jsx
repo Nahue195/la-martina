@@ -17,6 +17,7 @@ export function DataProvider({ children }) {
   const [gastosFijos, setGastosFijos] = useState([])
   const [gastosMes, setGastosMes] = useState([])
   const [pagosCuenta, setPagosCuenta] = useState([])
+  const [pedidoActivos, setPedidoActivos] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
 
@@ -57,6 +58,9 @@ export function DataProvider({ children }) {
   const refreshPagosCuenta = useCallback(async () => {
     try { setPagosCuenta(await db.pagosCuenta.getAll()) } catch { setPagosCuenta([]) }
   }, [])
+  const refreshPedidos = useCallback(async () => {
+    try { setPedidoActivos(await db.pedidos.getActivos()) } catch { setPedidoActivos([]) }
+  }, [])
 
   // Initial load
   useEffect(() => {
@@ -75,6 +79,7 @@ export function DataProvider({ children }) {
           refreshGastosFijos(),
           refreshGastosMes(),
           refreshPagosCuenta(),
+          refreshPedidos(),
         ])
       } catch (err) {
         setLoadError('No se pudo conectar a la base de datos. Verificá la conexión.')
@@ -102,6 +107,7 @@ export function DataProvider({ children }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos_fijos' }, refreshGastosFijos)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos_mes' }, refreshGastosMes)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos_cuenta' }, refreshPagosCuenta)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedido_items' }, refreshPedidos)
       .subscribe()
     return () => supabase.removeChannel(channel)
   }, [refreshMovements, refreshCategories, refreshUsers, refreshInstituciones, refreshFiados])
@@ -170,6 +176,22 @@ export function DataProvider({ children }) {
   const createPagoCuenta = useCallback(async (data) => { const item = await db.pagosCuenta.create(data); await refreshPagosCuenta(); return item }, [refreshPagosCuenta])
   const deletePagoCuenta = useCallback(async (id) => { await db.pagosCuenta.delete(id); await refreshPagosCuenta() }, [refreshPagosCuenta])
 
+  // --- Pedidos ---
+  const addToPedido = useCallback(async (productoId) => {
+    await db.pedidos.add(productoId)
+    await refreshPedidos()
+  }, [refreshPedidos])
+
+  const removeFromPedido = useCallback(async (id) => {
+    await db.pedidos.remove(id)
+    await refreshPedidos()
+  }, [refreshPedidos])
+
+  const cerrarPedido = useCallback(async (ids) => {
+    await db.pedidos.cerrarPedido(ids)
+    await refreshPedidos()
+  }, [refreshPedidos])
+
   return (
     <DataContext.Provider value={{
       movements: visibleMovements, allMovements: movements,
@@ -190,6 +212,8 @@ export function DataProvider({ children }) {
       createGastoFijo, updateGastoFijo, deleteGastoFijo,
       createGastoMes, updateGastoMes, deleteGastoMes, seedGastosMes,
       createPagoCuenta, deletePagoCuenta,
+      pedidoActivos,
+      addToPedido, removeFromPedido, cerrarPedido,
       refreshMovements, refreshCategories, refreshUsers, refreshInstituciones, refreshFiados, refreshCierres,
     }}>
       {children}
